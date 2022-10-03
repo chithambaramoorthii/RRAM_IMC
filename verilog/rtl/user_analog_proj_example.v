@@ -15,8 +15,6 @@
 
 `default_nettype none
 
-`include "example_por.v"
-
 /*
  * I/O mapping for analog
  *
@@ -134,81 +132,112 @@ module user_analog_proj_example (
     wire [`MPRJ_IO_PADS-`ANALOG_PADS-1:0] io_oeb;
     wire [`ANALOG_PADS-1:0] io_analog;
 
-    // wire [31:0] rdata; 
-    // wire [31:0] wdata;
-
-    // wire valid;
-    // wire [3:0] wstrb;
-
     wire isupply;	// Independent 3.3V supply
     wire io16, io15, io12, io11;
+	//added by moorthii 
+	wire clk, rst;
+	wire [31:0]wishbone_data_in;
+	wire [31:0]wishbone_data_out;
+	wire [31:0]wishbone_address_bus;
+	wire wb_we_i;
+	wire rd_sync_fifo_output_buffer_ADC;
+	wire rd_sync_fifo_output_buffer_CSA;
+	wire V1_WL;
+	wire V2_WL;
+	wire V3_WL;
+	wire V4_WL;
+	wire V1_SL;
+	wire V2_SL;
+	wire V3_SL;
+	wire V4_SL;
+	wire V1_BL;
+	wire V2_BL;
+	wire V3_BL;
+	wire V4_BL;
+	wire V0_REF_ADC;
+	wire V1_REF_ADC;
+	wire V2_REF_ADC;
+	wire REF_CSA;
+	wire VDD_PRE;
+	wire [15:0] CSA;
+	wire ADC_OUT0;
+	wire ADC_OUT1;
+	wire ADC_OUT2;
+	wire SL;
 
-    // WB MI A
-    // assign valid = wbs_cyc_i && wbs_stb_i; 
-    // assign wstrb = wbs_sel_i & {4{wbs_we_i}};
-    // assign wbs_dat_o = rdata;
-    // assign wdata = wbs_dat_i;
-
-    // IO --- unused (no need to connect to anything)
-    // assign io_out[`MPRJ_IO_PADS-`ANALOG_PADS-1:17] = 0;
-    // assign io_out[14:13] = 11'b0;
-    // assign io_out[10:0] = 11'b0;
-
-    // assign io_oeb[`MPRJ_IO_PADS-`ANALOG_PADS-1:17] = -1;
-    // assign io_oeb[14:13] = 11'b1;
-    // assign io_oeb[10:0] = 11'b1;
-
-    // IO --- enable outputs on 11, 12, 15, and 16
-    assign io_out[12:11] = {io12, io11};
-    assign io_oeb[12:11] = {vssd1, vssd1};
-
-    assign io_out[16:15] = {io16, io15};
-    assign io_oeb[16:15] = {vssd1, vssd1};
-
-    // IRQ
-    assign irq = 3'b000;	// Unused
-
-    // LA --- unused (no need to connect to anything)
-    // assign la_data_out = {128{1'b0}};	// Unused
-
-    // Instantiate the POR.  Connect the digital power to user area 1
-    // VCCD, and connect the analog power to user area 1 VDDA.
-
-    // Monitor the 3.3V output with mprj_io[10] = gpio_analog[3]
-    // Monitor the 1.8V outputs with mprj_io[11,12] = io_out[11,12]
+	assign clk = wb_clk_i;
+	assign rst = wb_rst_i;
+	assign wishbone_data_in = wbs_dat_i;
+	assign wishbone_address_bus[19:0] = wbs_adr_i[19:0]; 
+	assign wishbone_address_bus[30] = wbs_adr_i[28];
+	assign wishbone_address_bus[31] = wbs_adr_i[29];
+	assign wbs_dat_o = wishbone_data_out;
+	assign wbs_we_i = wbs_we_i;
+	assign rd_sync_fifo_output_buffer_ADC = wbs_we_i;
+	assign rd_sync_fifo_output_buffer_CSA = wbs_we_i;
+	assign V1_WL = vdda1;
+	assign V2_WL = vccd2;
+	assign V3_WL = vccd2;
+	assign V4_WL = vssd1;
+	assign V1_SL = vdda2;
+	assign V2_SL = io_analog[5];
+	assign V3_SL = vccd1;
+	assign V4_SL = vssd1;
+	assign V1_BL = vccd2;
+	assign V2_BL = vdda2;
+	assign V3_BL = io_analog[5];
+	assign V4_BL = vssd1;
+	assign V0_REF_ADC = io_analog[4];
+	assign V1_REF_ADC = io_analog[3];
+	assign V2_REF_ADC = io_analog[2];
+	assign REF_CSA = io_analog[1];
+	assign VDD_PRE = io_analog[0];
+	assign gpio_analog[5] = CSA[12];
+	assign gpio_analog[0] = ADC_OUT0;
+	assign gpio_analog[1] = ADC_OUT1;
+	assign gpio_analog[2] = ADC_OUT2;
+	assign io_analog[10] = SL;
+    
 
     top_wrapper top_wrapper(
-        //.clk(wb_clk_i)
-
+        .clk(clk),
+		.rst(rst),
+		.wishbone_data_in(wishbone_data_in),
+		//.\wishbone_address_bus[19:0] (wishbone_address_bus[19:0]),
+		//.\wishbone_address_bus[30] (wishbone_address_bus[30]),
+		//.\wishbone_address_bus[31] (wishbone_address_bus[31]),
+		.wishbone_address_bus(wishbone_address_bus),
+		.wishbone_data_out(wishbone_data_out),
+		.wbs_we_i(wbs_we_i),
+		.rd_sync_fifo_output_buffer_ADC(rd_sync_fifo_output_buffer_ADC),
+		.rd_sync_fifo_output_buffer_CSA(rd_sync_fifo_output_buffer_CSA),
+		.V1_WL(V1_WL),
+        .V2_WL(V2_WL),
+        .V3_WL(V3_WL),
+        .V4_WL(V4_WL),
+        .V1_SL(V1_SL),
+        .V2_SL(V2_SL),
+        .V3_SL(V3_SL),
+        .V4_SL(V4_SL),
+        .V1_BL(V1_BL),
+        .V2_BL(V2_BL),
+        .V3_BL(V3_BL),
+        .V4_BL(V4_BL),
+		.V0_REF_ADC(V0_REF_ADC),
+		.V1_REF_ADC(V1_REF_ADC),
+		.V2_REF_ADC(V2_REF_ADC),
+		.REF_CSA(REF_CSA),
+		.VDD_PRE(VDD_PRE),
+		//.\CSA[12] (CSA),
+		.CSA(CSA),
+		.ADC_OUT_0(ADC_OUT0),
+		.ADC_OUT_1(ADC_OUT1),
+		.ADC_OUT_2(ADC_OUT2),
+		.SL(SL)
+		
+		
+		
         );
-/*
-    example_por por1 (
-	`ifdef USE_POWER_PINS
-	    .vdd3v3(vdda1),
-	    .vdd1v8(vccd1),
-	    .vss(vssa1),
-	`endif
-	.porb_h(gpio_analog[3]),	// 3.3V domain output
-	.porb_l(io11),			// 1.8V domain output
-	.por_l(io12)			// 1.8V domain output
-    );
-*/
-    // Instantiate 2nd POR with the analog power supply on one of the
-    // analog pins.  NOTE:  io_analog[4] = mproj_io[18] and is the same
-    // pad with io_clamp_high/low[0].
-
-    `ifdef USE_POWER_PINS
-	assign isupply = io_analog[4];
-    	assign io_clamp_high[0] = isupply;
-    	assign io_clamp_low[0] = vssa1;
-
-	// Tie off remaining clamps
-    	assign io_clamp_high[2:1] = vssa1;
-    	assign io_clamp_low[2:1] = vssa1;
-    `endif
-
-    // Monitor the 3.3V output with mprj_io[25] = gpio_analog[7]
-    // Monitor the 1.8V outputs with mprj_io[26,27] = io_out[15,16]
 
 
 endmodule
@@ -245,7 +274,11 @@ V1_REF_ADC,
 V2_REF_ADC,
 REF_CSA,
 VDD_PRE,
-CSA
+CSA,
+ADC_OUT_0,
+ADC_OUT_1,
+ADC_OUT_2,
+SL					//added by moorthii to match layout manual wiring to io_analog[10]
 ); 
 
 `ifdef USE_POWER_PINS
@@ -262,6 +295,9 @@ output  [31:0]wishbone_data_out;
 input [31:0]wishbone_address_bus;
 input wbs_we_i;
 
+output wire ADC_OUT_0;			//added by moorthii to incorporate manual connection in gds
+output wire ADC_OUT_1;			//added by moorthii to incorporate manual connection in gds
+output wire ADC_OUT_2;			//added by moorthii to incorporate manual connection in gds
 
 wire   ENABLE_WL;
 wire   ENABLE_SL;
@@ -276,6 +312,10 @@ wire   [15:0]ADC_OUT0;
 wire   [15:0]ADC_OUT1;
 wire   [15:0]ADC_OUT2;
 
+assign ADC_OUT_0 = ADC_OUT0[8];				//added by moorthii to incorporate manual connection in gds
+assign ADC_OUT_1 = ADC_OUT1[8];				//added by moorthii to incorporate manual connection in gds
+assign ADC_OUT_2 = ADC_OUT2[8];				//added by moorthii to incorporate manual connection in gds
+
 wire ENABLE_CSA;
 
 
@@ -285,6 +325,8 @@ wire  [15:0]IN0_BL;
 wire  [15:0]IN1_BL;
 wire  [15:0]IN0_SL;
 wire  [15:0]IN1_SL;
+
+inout SL;			//Added by moorthii to match layout manual wiring to io_analog[10]
 
 
 
@@ -310,7 +352,42 @@ inout V2_REF_ADC;
 inout REF_CSA;
 
 
-RRAM_ANALOG  U_RRAM_ANALOG( .REF_CSA(REF_CSA) , .V0_REF_ADC(V0_REF_ADC) , .V1_REF_ADC(V1_REF_ADC) , .V2_REF_ADC(V2_REF_ADC) ,   .V1_WL(V1_WL) , .V2_WL(V2_WL) , .V3_WL(V3_WL) , .V4_WL(V4_WL) ,.V1_SL(V1_SL) , .V2_SL(V2_SL) , .V3_SL(V3_SL) , .V4_SL(V4_SL), .V1_BL(V1_BL) , .V2_BL(V2_BL) , .V3_BL(V3_BL) , .V4_BL(V4_BL) , .ENABLE_SL(ENABLE_SL) , .ENABLE_BL(ENABLE_BL) ,.ENABLE_WL(ENABLE_WL), .IN0_WL(IN0_WL) , .IN1_WL(IN1_WL) , .IN0_BL(IN0_BL) , .IN1_BL(IN1_BL) , .IN0_SL(IN0_SL) , .IN1_SL(IN1_SL) , .CSA(CSA) ,.ENABLE_CSA(ENABLE_CSA),.ADC_OUT0(ADC_OUT0),.ADC_OUT1(ADC_OUT1),.ADC_OUT2(ADC_OUT2),.PRE(PRE),.CLK_EN_ADC(CLK_EN_ADC),.SAEN_CSA(SAEN_CSA)   ); 
+RRAM_ANALOG  U_RRAM_ANALOG( 
+	.REF_CSA(REF_CSA) , 
+	.V0_REF_ADC(V0_REF_ADC) , 
+	.V1_REF_ADC(V1_REF_ADC) , 
+	.V2_REF_ADC(V2_REF_ADC) ,   
+	.V1_WL(V1_WL) , 
+	.V2_WL(V2_WL) , 
+	.V3_WL(V3_WL) , 
+	.V4_WL(V4_WL) ,
+	.V1_SL(V1_SL) , 
+	.V2_SL(V2_SL) , 
+	.V3_SL(V3_SL) , 
+	.V4_SL(V4_SL) , 
+	.V1_BL(V1_BL) , 
+	.V2_BL(V2_BL) , 
+	.V3_BL(V3_BL) , 
+	.V4_BL(V4_BL) , 
+	.ENABLE_SL(ENABLE_SL) , 
+	.ENABLE_BL(ENABLE_BL) ,
+	.ENABLE_WL(ENABLE_WL), 
+	.IN0_WL(IN0_WL) , 
+	.IN1_WL(IN1_WL) , 
+	.IN0_BL(IN0_BL) , 
+	.IN1_BL(IN1_BL) , 
+	.IN0_SL(IN0_SL) , 
+	.IN1_SL(IN1_SL) , 
+	.CSA(CSA) ,
+	.ENABLE_CSA(ENABLE_CSA),
+	.ADC_OUT0(ADC_OUT0),
+	.ADC_OUT1(ADC_OUT1),
+	.ADC_OUT2(ADC_OUT2),
+	.PRE(PRE),
+	.CLK_EN_ADC(CLK_EN_ADC),
+	.SAEN_CSA(SAEN_CSA) ,   
+	.SL(SL)						//Added by moorthii to match layout
+	); 
 
 
 RRAM_CONTROLLER U_RRAM_CONTROLLER(
